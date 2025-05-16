@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { connectToDB } from '@/lib/db';
 import { generateToken } from '@/lib/auth';
+import redis from '@/lib/redis';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -10,64 +11,58 @@ export default async function handler(req, res) {
   const { email, password, role } = req.body;
 
   try {
-    // Validate input
     if (!email || !password || !role) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Connect to database
-    const connection = await connectToDB();
+    const cacheKey = `user:${email.toLowerCase().trim()}:${role.toLowerCase().trim()}`;
 
-    // Debug: Log the input values
-    console.log('Input:', { email, password, role });
+    // Try to get user from Redis cache
+    const cachedUser = await redis.get(cacheKey);
 
-    // Find user by email and role
-    const [rows] = await connection.execute(
-      'SELECT * FROM employee WHERE email = ? AND role = ?',
-      [email.toLowerCase().trim(), role.toLowerCase().trim()]
-    );
+    let user;
 
-    // Debug: Log the database query result
-    console.log('Database Query Result:', rows);
+    if (cachedUser) {
+      console.log('Cache hit');
+      user = JSON.parse(cachedUser);
+    } else {
+      console.log('Cache miss');
 
-    if (rows.length === 0) {
-      // Release the connection back to the pool
+      const connection = await connectToDB();
+
+      const [rows] = await connection.execute(
+        'SELECT * FROM employee WHERE email = ? AND role = ?',
+        [email.toLowerCase().trim(), role.toLowerCase().trim()]
+      );
+
+      if (rows.length === 0) {
+        connection.release();
+        return res.status(401).json({ message: 'Invalid credentials: User not found' });
+      }
+
+      user = rows[0];
+
+      // Cache the user (without password)
+      const { password: pw, ...userToCache } = user;
+      await redis.set(cacheKey, JSON.stringify(userToCache), 'EX', 3600); // cache for 1 hour
+
       connection.release();
-      return res.status(401).json({ message: 'Invalid credentials: User not found' });
     }
 
-    const user = rows[0];
-
-    // Debug: Log the user data from the database
-    console.log('User Data:', user);
-
-    // Compare passwords
-    const isPasswordValid = await bcrypt.compare(password.trim(), user.password);
-
-    // Debug: Log password comparison result
-    console.log('Password Comparison Result:', isPasswordValid);
+    const isPasswordValid = await bcrypt.compare(password.trim(), user.password || '');
 
     if (!isPasswordValid) {
-      // Release the connection back to the pool
-      connection.release();
       return res.status(401).json({ message: 'Invalid credentials: Password mismatch' });
     }
 
-    // Generate JWT token
     const token = generateToken(user);
-
-    // Remove password from user data
     const { password: _, ...userData } = user;
 
-    // Release the connection back to the pool
-    connection.release();
-    
-    res.status(200).json({ 
+    res.status(200).json({
       token,
       user: userData,
-      message: 'Login successful'
+      message: 'Login successful',
     });
-
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Internal server error' });

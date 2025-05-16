@@ -33,7 +33,7 @@ export default function Projects() {
   const fetchCustomers = async () => {
     try {
       const res = await fetch("/api/customers");
-      if (!res.ok) throw new Error("Failed to fetch customers");
+      if (!res.ok) throw new ErrPOSTor("Failed to fetch customers");
       const data = await res.json();
       setCustomers(data.customers);
     } catch (error) {

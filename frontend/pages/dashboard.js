@@ -274,7 +274,7 @@ useEffect(() => {
         // First fetch base data
         const [customersRes, stocksRes, lastQuoteRes, invoicesRes, projectsRes, tasksRes, remindersRes] = await Promise.all([
           fetch('/api/customers'),
-          fetch('/api/stocks'),
+          fetch('/api/stocks?count=true'),
           fetch('/api/fetch'),
           fetch('/api/invoices'),
           fetch('/api/allProjects'),
@@ -316,7 +316,7 @@ useEffect(() => {
         // Set dashboard data
         setDashboardData({
           customers: Array.isArray(customersData?.customers) ? customersData.customers.length : 0,
-          stocks: Number(stocksData?.count) || (Array.isArray(stocksData) ? stocksData.length : 0) || 0,
+          stocks: Number(stocksData.count) || (Array.isArray(stocksData) ? stocksData.length : 0) || 0,
           lastQuoteId: lastQuoteData.length || 0,
           quotes: totalQuotesValue || 0,
           expenses: Number(totalExpenses) || 0,
@@ -336,6 +336,8 @@ useEffect(() => {
             ).length,
           }
         });
+
+        console.log(stocksData.length)
   
         setError(null);
       } catch (error) {

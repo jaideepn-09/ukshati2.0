@@ -1,20 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import {
-  FaPlus,
-  FaEye,
-  FaEdit,
-  FaTrash,
-  FaUserPlus,
-  FaCheck,
-  FaUsers,
-  FaBars,
-  FaTimes,
-  FaUser,
-  FaSignOutAlt,
-} from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
+import { FaPlus, FaEye } from "react-icons/fa";
+import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import BackButton from "@/components/BackButton";
 import ScrollToTopButton from "@/components/scrollup";
@@ -113,150 +101,113 @@ export default function Home() {
     };
     loadUserData();
   }, [router]);
-
   const inventoryCards = [
     {
       id: 1,
-      title: "Add expense",
+      title: "Add Expense",
       Icon: FaPlus,
-      colors: ["#1e40af", "#3b82f6", "#93c5fd", "#3b82f6", "#1e40af"], // Dark → Light → Dark
+      colors: ["#2563eb", "#3b82f6", "#60a5fa"],
       route: "/expense/addExpense",
       image: "https://www.pngmart.com/files/8/Inventory-PNG-HD.png",
     },
-
     {
       id: 2,
-      title: "View expenses",
+      title: "View Expenses",
       Icon: FaEye,
-      colors: ["#065f46", "#10b981", "#6ee7b7", "#10b981", "#065f46"], // Dark → Light → Dark
+      colors: ["#059669", "#10b981", "#34d399"],
       route: "/expense",
-      image:
-        "https://png.pngtree.com/png-clipart/20230825/original/pngtree-inventory-control-vector-warehouse-industry-picture-image_8773876.png",
+      image: "https://png.pngtree.com/png-clipart/20230825/original/pngtree-inventory-control-vector-warehouse-industry-picture-image_8773876.png",
     },
   ];
 
-  const handleAddEmployee = async (e) => {
-    e.preventDefault();
-    setFormSubmitting(true);
-    try {
-      const response = await fetch("/api/employees", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create employee");
-      }
-
-      const newEmployee = await response.json();
-      setEmployees((prev) => [...prev, newEmployee]);
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-      setFormData({ name: "", email: "", phone: "", role: "", password: "" });
-      setShowEmployeeModal(false);
-    } catch (error) {
-      setError(error.message);
-      console.error("Submission error:", error);
-    } finally {
-      setFormSubmitting(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("token");
-    router.push("/dashboard");
-  };
-
   return (
-    <div className="flex flex-col min-h-screen bg-cover text-black">
+    <div className="flex flex-col min-h-screen bg-cover text-black relative overflow-hidden">
       <StarryBackground />
       <BackButton route="/dashboard" />
-      <ScrollToTopButton/>
+      <ScrollToTopButton />
 
-      <div className="flex flex-col items-center flex-grow p-6 pt-20">
-        <h1 className="text-4xl font-bold mb-16 mt-16 text-center text-white">
+      {/* Animated Grid Background */}
+      <div className="absolute inset-0 z-0 opacity-10">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-repeat bg-[length:40px_40px]" />
+      </div>
+
+      <div className="flex flex-col items-center flex-grow p-6 pt-20 relative z-10">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-5xl font-bold mb-16 text-center bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-lg"
+        >
           Expense Management System
-        </h1>
+        </motion.h1>
 
         <div className="w-full max-w-7xl px-4">
           <motion.div
-            className="flex gap-4 h-[500px]"
-            animate={{
-              marginRight: isMenuOpen ? "16rem" : "0",
-            }}
+            className="flex gap-8 h-[500px] justify-center"
+            animate={{ marginRight: isMenuOpen ? "16rem" : "0" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             {inventoryCards.map((card) => (
               <motion.div
                 key={card.id}
-                className="relative rounded-2xl overflow-hidden cursor-pointer shadow-xl"
+                className="relative rounded-3xl overflow-hidden cursor-pointer shadow-2xl group"
                 initial={{ flex: 0.7 }}
-                animate={{
-                  flex: activeCard === card.id ? 2 : 0.7,
-                  scale: activeCard === card.id ? 1.03 : 1,
-                }}
+                animate={{ flex: activeCard === card.id ? 2 : 0.7 }}
                 onHoverStart={() => setActiveCard(card.id)}
                 onHoverEnd={() => setActiveCard(null)}
                 onClick={() => router.push(card.route)}
-                transition={{
-                  type: "spring",
-                  stiffness: 260,
-                  damping: 20,
-                }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
               >
+                {/* Glassmorphism Overlay */}
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-lg border border-white/10" />
+                
+                {/* Gradient Background */}
                 <motion.div
-                  className="absolute inset-0"
+                  className="absolute inset-0 opacity-80 group-hover:opacity-100 transition-opacity"
                   style={{
-                    background: `linear-gradient(45deg, ${card.colors.join(
-                      ", "
-                    )})`,
-                    backgroundSize: "400% 400%",
-                  }}
-                  animate={{
-                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                  }}
-                  transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    ease: "linear",
+                    background: `linear-gradient(45deg, ${card.colors.join(', ')})`,
                   }}
                 />
 
-                <motion.div
-                  className="absolute inset-0 bg-black/20 transition-all duration-300"
-                  style={{
-                    backgroundImage: `url(${card.image})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                  animate={{
-                    opacity: activeCard === card.id ? 1 : 0,
-                  }}
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
-                  <motion.h2
-                    className="text-2xl font-bold text-center whitespace-nowrap"
-                    animate={{
-                      fontSize: activeCard === card.id ? "2rem" : "1.5rem",
-                      marginBottom: activeCard === card.id ? "1.5rem" : "1rem",
-                      rotate: activeCard === card.id ? 0 : -90,
-                      transformOrigin: "center",
-                    }}
-                  >
-                    {card.title}
-                  </motion.h2>
+                {/* Animated Shine Effect */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute -inset-24 opacity-0 group-hover:opacity-30 transition-opacity duration-300">
+                    <div className="w-full h-full animate-shine bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
                   <motion.div
-                    animate={{
-                      opacity: activeCard === card.id ? 1 : 0,
+                    className="text-center"
+                    animate={{ 
+                      scale: activeCard === card.id ? 1.1 : 1,
+                      y: activeCard === card.id ? -20 : 0
                     }}
                   >
-                    <card.Icon className="text-4xl mb-4" />
+                    <card.Icon className="text-5xl mb-6 text-white/90 drop-shadow-md" />
+                    <motion.h2
+                      className="text-3xl font-semibold text-white tracking-tight"
+                      animate={{
+                        fontSize: activeCard === card.id ? "2.25rem" : "1.875rem",
+                      }}
+                    >
+                      {card.title}
+                    </motion.h2>
+                  </motion.div>
+
+                  <motion.div
+                    className="mt-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    animate={{ 
+                      opacity: activeCard === card.id ? 1 : 0,
+                      y: activeCard === card.id ? 0 : 20
+                    }}
+                  >
+                    <p className="text-white/80 text-center text-lg">
+                      {card.id === 1 
+                        ? "Securely record new financial transactions"
+                        : "Analyze and manage existing expense records"}
+                    </p>
                   </motion.div>
                 </div>
               </motion.div>
@@ -265,16 +216,19 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="w-full backdrop-blur-sm text-white py-4 text-center mt-auto">
-        <p className="text-sm">© {new Date().getFullYear()} Expense System</p>
+      {/* Enhanced Footer */}
+      <footer className="w-full backdrop-blur-lg bg-white/5 border-t border-white/10 py-6 text-center mt-auto relative z-10">
+        <p className="text-sm text-white/80 tracking-wide font-light">
+          © {new Date().getFullYear()} Expense System • Secure Financial Management
+        </p>
       </footer>
 
       {showEmployeeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-lg flex items-center justify-center z-50">
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-800 p-8 rounded-xl w-96"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-br from-gray-900 to-gray-800 p-8 rounded-2xl w-96 shadow-2xl border border-white/10"
           >
             <h2 className="text-2xl font-bold mb-6 text-white">
               Add New Employee

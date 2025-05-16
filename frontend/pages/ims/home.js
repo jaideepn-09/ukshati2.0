@@ -41,19 +41,21 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [stocksRes, categoriesRes, spentRes] = await Promise.all([
+      const [stocksRes, categoriesRes, spentRes,stockCount] = await Promise.all([
         fetch('/api/stocks'),
         fetch('/api/categories'),
-        fetch('/api/inventory_spent')
+        fetch('/api/inventory_spent'),
+        fetch('/api/stocks?count=true')
       ]);
 
-      if (!stocksRes.ok || !categoriesRes.ok || !spentRes.ok) {
+      if (!stocksRes.ok || !categoriesRes.ok || !spentRes.ok || !stockCount.ok) {
         throw new Error('Failed to fetch data');
       }
 
       const stocksData = await stocksRes.json();
       const categoriesData = await categoriesRes.json();
       const spentData = await spentRes.json();
+      const stockCountData = await stockCount.json();
 
       if (categoriesData.success && categoriesData.categories) {
         setCategories(categoriesData.categories);
@@ -66,7 +68,7 @@ export default function Dashboard() {
       const totalStockValue = stocksData.reduce((sum, item) => sum + (item.quantity * item.price_pu), 0);
 
       setStats({
-        totalItems: stocksData.length,
+        totalItems: stockCountData.count,
         categories: categoriesData.categories.length,
         lowStock: lowStockItems.length,
         spentStock: spentData.length || 0,
